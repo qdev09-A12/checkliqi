@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Checker - Kiểm tra chặn API</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #252526;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h2 { color: #61dafb; margin-bottom: 20px; }
+        button {
+            background-color: #0e639c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            font-weight: bold;
+        }
+        button:hover { background-color: #1177bb; }
+        button:disabled { background-color: #4a4a4a; cursor: not-allowed; }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: left;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            min-height: 100px;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+        }
+        .log-info { color: #9cdcfe; }
+        .log-success { color: #4ec9b0; font-weight: bold; }
+        .log-error { color: #f44747; font-weight: bold; }
+        .log-warn { color: #ce9178; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>🛠 API CORS Tester</h2>
+        <p style="margin-bottom: 20px; color: #aaa;">Kiểm tra xem API có cho phép gọi từ web này không</p>
+        
+        <button id="btnCheck" onclick="runTest()">Bắt đầu kiểm tra</button>
+        
+        <div id="status">Sẵn sàng...</div>
+    </div>
+
+    <script>
+        // API CẦN KIỂM TRA
+        const TARGET_API = 'https://ttlq.ipapox.com/checkliquisun.php';
+
+        async function runTest() {
+            const btn = document.getElementById('btnCheck');
+            const logBox = document.getElementById('status');
+            
+            btn.disabled = true;
+            btn.innerText = "Đang kết nối...";
+            logBox.innerHTML = `<span class="log-info">➤ Đang gửi request tới:</span>\n${TARGET_API}\n\n`;
+
+            try {
+                // Giả lập request POST giống hệt tool thật
+                const response = await fetch(TARGET_API, {
+                    method: 'POST',
+                    mode: 'cors', // Bắt buộc trình duyệt check CORS
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Accept': 'application/json'
+                    },
+                    body: 'test_connection=1' // Body giả
+                });
+
+                // Nếu code chạy được đến dòng này -> Server CHO PHÉP
+                logBox.innerHTML += `<span class="log-success">✅ KẾT NỐI THÀNH CÔNG!</span>\n`;
+                logBox.innerHTML += `<span class="log-info">Status: ${response.status} ${response.statusText}</span>\n`;
+                logBox.innerHTML += `\n➡ Kết luận: Server này KHÔNG CHẶN web lạ. Bạn có thể dùng JS thuần.`;
+
+            } catch (error) {
+                // Nếu nhảy vào đây -> Server CHẶN
+                logBox.innerHTML += `<span class="log-error">❌ KẾT NỐI BỊ CHẶN (CORS ERROR)</span>\n`;
+                logBox.innerHTML += `<span class="log-warn">Chi tiết: ${error.message}</span>\n\n`;
+                
+                if (error.message.includes('Failed to fetch')) {
+                    logBox.innerHTML += `🛑 <b>Nguyên nhân:</b>\nTrình duyệt đã chặn request này vì server đích không có header 'Access-Control-Allow-Origin'.\n\n`;
+                    logBox.innerHTML += `💡 <b>Giải pháp:</b>\nBạn BẮT BUỘC phải dùng <b>Backend trung gian</b> (như Cloudflare Worker hoặc Proxy) để gọi API này.`;
+                }
+            }
+
+            btn.disabled = false;
+            btn.innerText = "Kiểm tra lại";
+        }
+    </script>
+</body>
+</html>
