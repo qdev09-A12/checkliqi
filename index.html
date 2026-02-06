@@ -3,113 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CORS Checker - Kiểm tra chặn API</title>
+    <title>Ultima Check Tool - Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script>
+        const userSession = sessionStorage.getItem('ULTIMA_CURRENT_USER');
+        if (!userSession) {
+            window.location.href = "login.html";
+        }
+    </script>
+
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e1e;
-            color: #d4d4d4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+        /* CSS giữ nguyên style cũ, chỉ xóa phần Login Overlay */
+        :root {
+            --bg: #0a0b10;
+            --panel: #13151b;
+            --primary: #00f2ff;
+            --success: #00ff9d;
+            --error: #ff0055;
+            --text: #e0e6ed;
+            --border: #2a2f3d;
         }
-        .container {
-            background-color: #252526;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
-        }
-        h2 { color: #61dafb; margin-bottom: 20px; }
-        button {
-            background-color: #0e639c;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-            width: 100%;
-            font-weight: bold;
-        }
-        button:hover { background-color: #1177bb; }
-        button:disabled { background-color: #4a4a4a; cursor: not-allowed; }
-        #status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 5px;
-            text-align: left;
-            font-family: 'Consolas', monospace;
-            font-size: 14px;
-            white-space: pre-wrap;
-            min-height: 100px;
-            background-color: #1e1e1e;
-            border: 1px solid #333;
-        }
-        .log-info { color: #9cdcfe; }
-        .log-success { color: #4ec9b0; font-weight: bold; }
-        .log-error { color: #f44747; font-weight: bold; }
-        .log-warn { color: #ce9178; }
+        * { box-sizing: border-box; outline: none; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Rajdhani', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: rgba(19, 21, 27, 0.9); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); }
+        .logo { font-size: 24px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; }
+        
+        .user-panel { display: flex; gap: 20px; align-items: center; }
+        .stat-box { background: #000; padding: 5px 15px; border-radius: 4px; border: 1px solid var(--border); font-family: 'Roboto Mono', monospace; font-size: 14px; }
+        .stat-box span { color: var(--primary); font-weight: bold; }
+        
+        .btn-logout { background: transparent; border: 1px solid var(--error); color: var(--error); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-logout:hover { background: var(--error); color: white; }
+
+        .main-container { display: flex; flex: 1; padding: 20px; gap: 20px; height: calc(100vh - 70px); }
+        .input-section { flex: 1; display: flex; flex-direction: column; gap: 15px; max-width: 400px; }
+        .glass-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; flex-direction: column; height: 100%; }
+        
+        h3 { margin: 0 0 15px 0; color: var(--text); font-size: 18px; text-transform: uppercase; border-left: 4px solid var(--primary); padding-left: 10px; }
+        textarea { flex: 1; background: #08090c; border: 1px solid var(--border); color: #a0aec0; padding: 15px; resize: none; border-radius: 8px; font-family: 'Roboto Mono', monospace; font-size: 13px; line-height: 1.5; }
+        textarea:focus { border-color: var(--primary); color: white; }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        button.action-btn { flex: 1; padding: 15px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; text-transform: uppercase; font-size: 16px; transition: 0.2s; }
+        .btn-start { background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%); color: white; }
+        .btn-start:hover { box-shadow: 0 6px 20px rgba(0, 180, 219, 0.5); }
+        
+        .output-section { flex: 2; display: flex; flex-direction: column; height: 100%; }
+        .result-list { flex: 1; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 8px; }
+        
+        .res-item { background: #1a1d26; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #555; font-family: 'Roboto Mono', monospace; font-size: 13px; display: flex; align-items: center; justify-content: space-between; }
+        .res-item.success { border-left-color: var(--success); background: rgba(0, 255, 157, 0.05); }
+        .res-item.error { border-left-color: var(--error); background: rgba(255, 0, 85, 0.05); color: #ff88a0; }
+        
+        .summary-bar { margin-top: 15px; padding: 15px; background: #13151b; border-radius: 8px; display: flex; justify-content: space-between; border: 1px solid var(--border); font-weight: bold; }
+        .sum-ok { color: var(--success); }
+        .sum-fail { color: var(--error); }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>🛠 API CORS Tester</h2>
-        <p style="margin-bottom: 20px; color: #aaa;">Kiểm tra xem API có cho phép gọi từ web này không</p>
-        
-        <button id="btnCheck" onclick="runTest()">Bắt đầu kiểm tra</button>
-        
-        <div id="status">Sẵn sàng...</div>
+    <header>
+        <div class="logo">⚡ ULTIMA TOOL</div>
+        <div class="user-panel">
+            <div class="stat-box">USER: <span id="displayEmail">...</span></div>
+            <div class="stat-box">LƯỢT: <span id="displayTurns">0</span></div>
+            <button class="btn-logout" onclick="logout()">LOGOUT</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="input-section">
+            <div class="glass-panel">
+                <h3>📦 DANH SÁCH TÀI KHOẢN</h3>
+                <textarea id="inputList" placeholder="user|pass&#10;user2|pass2..."></textarea>
+                <div class="btn-group">
+                    <button id="btnStop" class="action-btn" style="background: #333; display: none;" onclick="stopCheck()">DỪNG</button>
+                    <button id="btnCheck" class="action-btn btn-start" onclick="startCheck()">BẮT ĐẦU CHECK</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <div class="glass-panel" style="padding: 0; background: transparent; border: none; box-shadow: none;">
+                <div class="result-list" id="resultContainer"></div>
+                <div class="summary-bar">
+                    <div>LIVE: <span id="countOk" class="sum-ok">0</span></div>
+                    <div>DIE: <span id="countFail" class="sum-fail">0</span></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // API CẦN KIỂM TRA
-        const TARGET_API = 'https://ttlq.ipapox.com/checkliquisun.php';
+        // --- LOGIC CHÍNH ---
+        // Lấy dữ liệu user từ Login chuyển sang
+        const currentUser = JSON.parse(sessionStorage.getItem('ULTIMA_CURRENT_USER'));
+        
+        // Hiển thị thông tin Header
+        document.getElementById('displayEmail').innerText = currentUser.email;
+        document.getElementById('displayTurns').innerText = currentUser.turns;
 
-        async function runTest() {
-            const btn = document.getElementById('btnCheck');
-            const logBox = document.getElementById('status');
-            
-            btn.disabled = true;
-            btn.innerText = "Đang kết nối...";
-            logBox.innerHTML = `<span class="log-info">➤ Đang gửi request tới:</span>\n${TARGET_API}\n\n`;
+        const WORKER_URL = 'https://proud-art-e32c.qdev09.workers.dev/'; // Link API check của bạn
+        let isRunning = false;
+        let stopSignal = false;
+        let stats = { ok: 0, fail: 0 };
 
-            try {
-                // Giả lập request POST giống hệt tool thật
-                const response = await fetch(TARGET_API, {
-                    method: 'POST',
-                    mode: 'cors', // Bắt buộc trình duyệt check CORS
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'Accept': 'application/json'
-                    },
-                    body: 'test_connection=1' // Body giả
-                });
+        function logout() {
+            sessionStorage.removeItem('ULTIMA_CURRENT_USER');
+            window.location.href = 'login.html';
+        }
 
-                // Nếu code chạy được đến dòng này -> Server CHO PHÉP
-                logBox.innerHTML += `<span class="log-success">✅ KẾT NỐI THÀNH CÔNG!</span>\n`;
-                logBox.innerHTML += `<span class="log-info">Status: ${response.status} ${response.statusText}</span>\n`;
-                logBox.innerHTML += `\n➡ Kết luận: Server này KHÔNG CHẶN web lạ. Bạn có thể dùng JS thuần.`;
+        async function startCheck() {
+            const textArea = document.getElementById('inputList');
+            let lines = textArea.value.split('\n').filter(line => line.trim() !== "");
 
-            } catch (error) {
-                // Nếu nhảy vào đây -> Server CHẶN
-                logBox.innerHTML += `<span class="log-error">❌ KẾT NỐI BỊ CHẶN (CORS ERROR)</span>\n`;
-                logBox.innerHTML += `<span class="log-warn">Chi tiết: ${error.message}</span>\n\n`;
+            if (lines.length === 0) return alert("⚠️ Danh sách trống!");
+            if (currentUser.turns <= 0) return alert("⛔ HẾT LƯỢT! Vui lòng liên hệ Admin nạp thêm.");
+
+            isRunning = true;
+            stopSignal = false;
+            document.getElementById('btnCheck').style.display = 'none';
+            document.getElementById('btnStop').style.display = 'block';
+            textArea.disabled = true;
+
+            for (let i = 0; i < lines.length; i++) {
+                if (stopSignal || currentUser.turns <= 0) break;
+
+                const line = lines[i];
+                if (!line.includes('|')) continue;
+
+                const [user, pass] = line.split('|');
                 
-                if (error.message.includes('Failed to fetch')) {
-                    logBox.innerHTML += `🛑 <b>Nguyên nhân:</b>\nTrình duyệt đã chặn request này vì server đích không có header 'Access-Control-Allow-Origin'.\n\n`;
-                    logBox.innerHTML += `💡 <b>Giải pháp:</b>\nBạn BẮT BUỘC phải dùng <b>Backend trung gian</b> (như Cloudflare Worker hoặc Proxy) để gọi API này.`;
-                }
-            }
+                // Gọi API Check (Giả lập hoặc thật)
+                const result = await checkAccount(user.trim(), pass.trim());
+                
+                // Trừ lượt (Chỉ ở Client để hiển thị, thực tế nên trừ ở Server)
+                currentUser.turns--;
+                document.getElementById('displayTurns').innerText = currentUser.turns;
 
-            btn.disabled = false;
-            btn.innerText = "Kiểm tra lại";
+                if (result.status === 'success') {
+                    const d = result.data;
+                    const oneLine = `${d.username}|${d.password} | Rank: ${d.rank} | Skin: ${d.skin}`;
+                    addResult(oneLine, true);
+                    stats.ok++;
+                    // Xóa dòng thành công
+                    textArea.value = textArea.value.replace(line + "\n", "").replace(line, "").trim(); 
+                } else {
+                    addResult(`${user}|${pass} -> ${result.msg || 'Lỗi'}`, false);
+                    stats.fail++;
+                }
+
+                document.getElementById('countOk').innerText = stats.ok;
+                document.getElementById('countFail').innerText = stats.fail;
+                
+                // Cập nhật lại SessionStorage để lưu số lượt mới (nếu load lại trang không bị mất số lượt vừa trừ)
+                sessionStorage.setItem('ULTIMA_CURRENT_USER', JSON.stringify(currentUser));
+                
+                await new Promise(r => setTimeout(r, 500));
+            }
+            stopCheck();
+        }
+
+        async function checkAccount(account, password) {
+            try {
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ account, password })
+                });
+                return await response.json();
+            } catch (e) {
+                return { status: 'error', msg: "Lỗi mạng" };
+            }
+        }
+
+        function stopCheck() {
+            isRunning = false;
+            stopSignal = true;
+            document.getElementById('btnCheck').style.display = 'block';
+            document.getElementById('btnStop').style.display = 'none';
+            document.getElementById('inputList').disabled = false;
+        }
+
+        function addResult(text, isSuccess) {
+            const container = document.getElementById('resultContainer');
+            const div = document.createElement('div');
+            div.className = `res-item ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = `<div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${text}</div>`;
+            container.insertBefore(div, container.firstChild);
         }
     </script>
 </body>
