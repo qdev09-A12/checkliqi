@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultima ID - Access Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0b10;
+            --primary: #00f2ff;
+            --success: #00ff9d;
+            --error: #ff0055;
+            --glass: rgba(19, 21, 27, 0.95);
+            --border: #2a2f3d;
+        }
+        body { 
+            margin: 0; background: var(--bg); color: #e0e6ed; 
+            font-family: 'Rajdhani', sans-serif; height: 100vh; 
+            display: flex; justify-content: center; align-items: center; 
+            background-image: radial-gradient(circle at 50% 50%, #1a202c 0%, #0a0b10 70%);
+        }
+        .auth-container {
+            width: 450px; padding: 40px; background: var(--glass);
+            border: 1px solid var(--border); border-radius: 16px;
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.15); backdrop-filter: blur(20px);
+        }
+        .logo { font-size: 32px; font-weight: 800; color: var(--primary); text-align: center; margin-bottom: 30px; letter-spacing: 4px; text-shadow: 0 0 15px rgba(0, 242, 255, 0.6); }
+        .tabs { display: flex; margin-bottom: 30px; border-bottom: 2px solid var(--border); }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; color: #666; font-weight: bold; transition: 0.3s; }
+        .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 14px; color: #888; margin-bottom: 8px; font-weight: bold; }
+        input { width: 100%; padding: 12px; background: #050608; border: 1px solid var(--border); color: white; border-radius: 6px; font-family: 'Roboto Mono'; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
+        input.valid { border-color: var(--success); }
+        input.invalid { border-color: var(--error); }
+        
+        .verify-group { display: flex; gap: 10px; }
+        .btn-code { padding: 0 15px; background: #333; color: #666; border: none; cursor: not-allowed; border-radius: 6px; font-weight: bold; transition: 0.3s; }
+        .btn-code.active { background: var(--primary); color: #000; cursor: pointer; }
+
+        .btn-submit { width: 100%; padding: 15px; background: #333; color: #666; border: none; border-radius: 6px; font-weight: 800; cursor: not-allowed; transition: 0.3s; margin-top: 10px; }
+        .btn-submit.active { background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%); color: white; cursor: pointer; box-shadow: 0 5px 20px rgba(0, 180, 219, 0.4); }
+
+        .auth-form { display: none; animation: fadeIn 0.4s ease; }
+        .auth-form.active { display: block; }
+        .helper-text { font-size: 11px; color: #555; margin-top: 5px; }
+        .helper-text.valid { color: var(--success); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">ULTIMA ID</div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('login')">Đăng Nhập</div>
+            <div class="tab" onclick="switchTab('register')">Đăng Ký</div>
+        </div>
+
+        <div id="loginForm" class="auth-form active">
+            <div class="form-group">
+                <label>EMAIL</label>
+                <input type="text" id="loginEmail" placeholder="user@example.com">
+            </div>
+            <div class="form-group">
+                <label>PASSWORD</label>
+                <input type="password" id="loginPass" placeholder="••••••••">
+            </div>
+            <button class="btn-submit active" onclick="doLogin()">TRUY CẬP HỆ THỐNG</button>
+        </div>
+
+        <div id="registerForm" class="auth-form">
+            <div class="form-group">
+                <label>MẬT KHẨU MỚI</label>
+                <input type="password" id="regPass" onkeyup="checkInputs()" placeholder="Yêu cầu: Hoa, thường, ký tự đặc biệt">
+                <div class="helper-text" id="passMsg">Chưa đạt yêu cầu bảo mật</div>
+            </div>
+            <div class="form-group">
+                <label>EMAIL XÁC THỰC</label>
+                <div class="verify-group">
+                    <input type="email" id="regEmail" onkeyup="checkInputs()" placeholder="email@domain.com">
+                    <button id="btnSendCode" class="btn-code" onclick="sendCode()">LẤY MÃ</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>MÃ OTP (5 SỐ)</label>
+                <input type="text" id="regOtp" maxlength="5" onkeyup="verifyOtp()" placeholder="xxxxx">
+                <div class="helper-text" id="otpMsg"></div>
+            </div>
+            <button id="btnRegister" class="btn-submit" onclick="doRegister()">ĐĂNG KÝ USER</button>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+</body>
+</html>
